@@ -4,7 +4,7 @@ import java.util.EmptyStackException;
 import java.util.Scanner;
 
 /**
- * @author Roman Soldatov B19-02
+ * @author Roman Soldatov BS19-02
  * 2.2 Balanced parentheses
  * Submission number: 71180759
  */
@@ -184,4 +184,3 @@ class Stack<T> {
         return (size == 0);
     }
 }
-

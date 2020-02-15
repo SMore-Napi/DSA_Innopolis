@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 
 
 /**
- * @author Roman Soldatov B19-02
+ * @author Roman Soldatov BS19-02
  * <p>
  * 2.1 Implementing List ADT
  * <p>

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 /**
- * @author Roman Soldatov
+ * @author Roman Soldatov BS19-02
  * 2.3 Phonebook
  * Submission number: 71183820
  */
@@ -161,4 +161,3 @@ public class Phonebook {
         }
     }
 }
-

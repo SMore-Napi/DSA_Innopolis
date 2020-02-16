@@ -7,6 +7,7 @@ import java.util.Scanner;
  * @author Roman Soldatov BS19-02
  * 2.2 Balanced parentheses
  * Submission number: 71180759
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/269072/submission/71180759
  */
 
 public class BalancedParentheses {

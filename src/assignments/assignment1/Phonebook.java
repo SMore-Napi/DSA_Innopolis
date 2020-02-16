@@ -8,7 +8,9 @@ import java.util.Scanner;
  * @author Roman Soldatov BS19-02
  * 2.3 Phonebook
  * Submission number: 71183820
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/269072/submission/71183820
  */
+
 public class Phonebook {
     public static void main(String[] args) {
         HashMap<String, ArrayList<String>> contacts = new HashMap<>();

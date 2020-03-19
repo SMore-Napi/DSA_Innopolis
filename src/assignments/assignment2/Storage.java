@@ -9,9 +9,12 @@ import java.util.ArrayList;
  * todo Annotate every operation on the data structure with asymptotic analysis of its time complexity.
  */
 public class Storage {
+
     public static void main(String[] args) {
+
         AVLTree tree = new AVLTree();
 
+        /*
         tree.insert(6, "a");
         tree.insert(3, "b");
         tree.insert(9, "c");
@@ -23,6 +26,33 @@ public class Storage {
         tree.insert(4, "i");
         tree.insert(7, "j");
         tree.insert(11, "k");
+
+         */
+
+        /*
+        tree.insert(1, "a");
+        tree.insert(2, "b");
+        tree.insert(3, "c");
+        tree.insert(4, "d");
+        tree.insert(5, "e");
+        tree.insert(6, "f");
+        tree.insert(7, "g");
+        tree.insert(8, "h");
+        tree.insert(9, "i");
+        tree.insert(10, "j");
+        tree.insert(11, "k");
+         */
+
+        tree.add(50, "a");
+        tree.add(25, "b");
+        tree.add(10, "c");
+        tree.add(5, "d");
+        tree.add(7, "e");
+        tree.add(3, "f");
+        tree.add(30, "g");
+        tree.add(20, "h");
+        tree.add(8, "i");
+        tree.add(15, "j");
 
 
         // ArrayList<AVLTree.Node> nodes = tree.getNodesPreorder();
@@ -36,7 +66,7 @@ public class Storage {
 
         nodes = tree.getNodesInorder();
         for (AVLTree.Node node : nodes) {
-            System.out.print(node.key + " ");
+            System.out.print(node.height + " ");
         }
         System.out.println();
 
@@ -46,28 +76,96 @@ public class Storage {
 class AVLTree {
     private Node root;
 
-    public void insert(Integer key, String value) {
+    private int getHeight(Node node) {
+        if (node == null) {
+            return -1;
+        }
+        return node.height;
+    }
+
+    private void updateHeight(Node node) {
+        node.height = 1 + Math.max(getHeight(node.leftNode), getHeight(node.rightNode));
+    }
+
+    private int getBalanceBetweenChilds(Node node) {
+        if (node == null) {
+            return 0;
+        }
+        return getHeight(node.rightNode) - getHeight(node.leftNode);
+    }
+
+    private Node rightRotate(Node rootNode) {
+        Node newRootNode = rootNode.leftNode;
+        rootNode.leftNode = newRootNode.rightNode;
+        newRootNode.rightNode = rootNode;
+
+        newRootNode.parentNode = rootNode.parentNode;
+        rootNode.parentNode = newRootNode;
+
+        updateHeight(rootNode);
+        updateHeight(newRootNode);
+
+        return newRootNode;
+    }
+
+    private Node leftRotate(Node rootNode) {
+        Node newRootNode = rootNode.rightNode;
+        rootNode.rightNode = newRootNode.leftNode;
+        newRootNode.leftNode = rootNode;
+
+        newRootNode.parentNode = rootNode.parentNode;
+        rootNode.parentNode = newRootNode;
+
+        updateHeight(rootNode);
+        updateHeight(newRootNode);
+
+        return newRootNode;
+    }
+
+    private Node restoreBalance(Node node) {
+        updateHeight(node);
+        int balance = getBalanceBetweenChilds(node);
+
+        if (balance < -1) {
+            if (getHeight(node.leftNode.leftNode) <= getHeight(node.leftNode.rightNode)) {
+                node.leftNode = leftRotate(node.leftNode);
+            }
+            node = rightRotate(node);
+        } else if (balance > 1) {
+            if (getHeight(node.rightNode.rightNode) <= getHeight(node.rightNode.leftNode)) {
+                node.rightNode = rightRotate(node.rightNode);
+            }
+            node = leftRotate(node);
+        }
+
+        return node;
+    }
+
+    public void add(Integer key, String value) {
         if (root == null) {
             root = new Node(key, value, null);
         } else {
-            insert(key, value, root);
+            root = add(key, value, root);
         }
     }
 
-    private void insert(Integer key, String value, Node parent) {
+    private Node add(Integer key, String value, Node parent) {
         if (key < parent.key) {
             if (parent.leftNode == null) {
                 parent.leftNode = new Node(key, value, parent);
             } else {
-                insert(key, value, parent.leftNode);
+                parent.leftNode = add(key, value, parent.leftNode);
             }
         } else {
             if (parent.rightNode == null) {
                 parent.rightNode = new Node(key, value, parent);
             } else {
-                insert(key, value, parent.rightNode);
+                parent.rightNode = add(key, value, parent.rightNode);
             }
         }
+
+        parent = restoreBalance(parent);
+        return parent;
     }
 
     public String delete(Integer key) {
@@ -266,6 +364,7 @@ class AVLTree {
 
         Integer key;
         String value;
+        int height;
 
         Node(Integer key, String value, Node parentNode) {
             this.key = key;
@@ -290,5 +389,3 @@ class AVLTree {
         PREORDER, INORDER, POSTORDER;
     }
 }
-
-

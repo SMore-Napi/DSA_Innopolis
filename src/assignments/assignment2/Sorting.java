@@ -1,8 +1,10 @@
 package assignments.assignment2;
 
 // Uncomment it to use junit tests.
-// import org.junit.Test;
-// import static org.junit.Assert.*;
+/*
+import org.junit.Test;
+import static org.junit.Assert.*;
+ */
 
 /**
  * @author Roman Soldatov BS19-02.
@@ -156,9 +158,9 @@ public class Sorting {
  * There also some private helper methods.
  * You don't need to create an instance of this class as all methods are static.
  * <p>
- * The time complexity of this algorithm is O(nlogn) in worst-case, best-case, and average-case.
+ * The time complexity of this algorithm is O(n*log(n)) in worst-case, best-case, and average-case.
  * It is the out-of-place implementation as it uses a temporary array to merge elements from a current part.
- * It is a stable sort as elements, during the merging, are inserting in a sorted array  in the same order as they were.
+ * It is a stable sort as elements, during the merging, are inserting in a sorted array in the same order as they were.
  */
 class MergeSorter {
 

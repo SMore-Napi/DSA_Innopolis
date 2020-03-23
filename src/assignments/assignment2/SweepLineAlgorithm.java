@@ -1,18 +1,26 @@
 package assignments.assignment2;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Comparator;
+import java.util.StringTokenizer;
 
 // Uncomment it to use junit tests.
 /*
 import org.junit.Test;
 import static org.junit.Assert.*;
- */
+*/
 
 /**
  * @author Roman Soldatov BS19-02.
+ * Submission number: 74147304
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/272963/submission/74147304
+ * <p>
  * 2.4 Sweep line algorithm.
- * //todo check is it a correct description
+ * This class contains the main method to launch it on Codeforces and the sweepLineAlgorithm.
  * <p>
  * Also, this class contains junit methods for testing the MergeSorter and AVLTree classes, because it is a public class,
  * and we are not allowed to provide a program in separate files. It requires to import the junit library.
@@ -23,37 +31,151 @@ import static org.junit.Assert.*;
  */
 public class SweepLineAlgorithm {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        // Input points.
+        Point[] points = input();
 
-        Scanner scanner = new Scanner(System.in);
-        int n = scanner.nextInt();
-        ArrayList<LineSegment> segments = new ArrayList<>(n);
+        // Run the Sweep Line Algorithm.
+        LineSegment[] lines = sweepLineAlgorithm(points);
 
-        for (int i = 0; i < n; i++) {
-            int xP = scanner.nextInt();
-            int yP = scanner.nextInt();
-            int xQ = scanner.nextInt();
-            int yQ = scanner.nextInt();
-
-            segments.add(new LineSegment(new Point(xP, yP), new Point(xQ, yQ)));
+        // Output.
+        PrintWriter printWriter = new PrintWriter(System.out);
+        if (lines == null) {
+            printWriter.write("NO INTERSECTIONS\n");
+        } else {
+            printWriter.write("INTERSECTION\n");
+            printWriter.write(lines[0].toString() + "\n");
+            printWriter.write(lines[1].toString() + "\n");
         }
 
-        boolean intersection = false;
-        for (int i = 0; i < segments.size(); i++) {
-            for (int j = i + 1; j < segments.size(); j++) {
-                if (SegmentIntersection.areIntersect(segments.get(i), segments.get(j))) {
-                    System.out.println("INTERSECTION");
-                    System.out.println(segments.get(i).toString());
-                    System.out.println(segments.get(j).toString());
-                    intersection = true;
-                    break;
+        printWriter.close();
+    }
+
+    /**
+     * Input points.
+     * O(n).
+     *
+     * @return array of points.
+     */
+    public static Point[] input() throws IOException {
+
+        int n = nextInt(); // number of line segments.
+        Point[] points = new Point[2 * n];
+
+        for (int i = 0; i < 2 * n; i += 2) {
+            int xP = nextInt();
+            int yP = nextInt();
+            int xQ = nextInt();
+            int yQ = nextInt();
+
+            // Add the left end of a line segment.
+            points[i] = new Point(xP, yP, Point.Order.FIRST);
+            // Add the right end of a line segment.
+            points[i + 1] = new Point(xQ, yQ, Point.Order.SECOND);
+
+            // Connect these two points with each other because they belong to the same segment.
+            points[i].neighbour = points[i + 1];
+            points[i + 1].neighbour = points[i];
+        }
+
+        return points;
+    }
+
+    /**
+     * The main Sweep line algorithm.
+     * It scans all line segments and determines if any two segments intersect.
+     * It takes points as an input
+     * O(n*log(n)).
+     *
+     * @param points - points of line segments.
+     * @return an array of two LineSegment objects which intersect with each other; null - if there are no any intersect segments.
+     */
+    public static LineSegment[] sweepLineAlgorithm(Point[] points) {
+
+        // Sort points by x coordinate using the merge-sort.
+        // If x coordinates of two points are equal,
+        // then the left point of a segment comes firstly.
+        // The comparator is written as the lambda expression.
+        MergeSorter.sort(points, (o1, o2) -> {
+            if (o1.x == o2.x) {
+                if (o1.isLeftPoint()) {
+                    return -1;
                 }
+                return 1;
+            }
+            return o1.x - o2.x;
+        });
+
+        // The tree will be saving all left points, comparing them with their predecessor and successor.
+        // If we meet the right point, then we compare its predecessor and successor,
+        // and then we delete this line segment from a tree.
+        AVLTree<Point, Point> tree = new AVLTree<>();
+
+        // Observe each point.
+        for (Point point : points) {
+
+            // In case it is the start point of a line segment.
+            if (point.isLeftPoint()) {
+                tree.add(point, point);
+
+                Point predecessor = tree.getPredecessorByKey(point);
+                Point successor = tree.getSuccessorByKey(point);
+
+                LineSegment line = new LineSegment(point);
+
+                // Compare the current point with its predecessor.
+                if (predecessor != null) {
+                    LineSegment line1 = new LineSegment(predecessor);
+                    if (SegmentIntersection.areIntersect(line, line1)) {
+                        return new LineSegment[]{line, line1};
+                    }
+                }
+
+                // Compare the current point with its successor.
+                if (successor != null) {
+                    LineSegment line2 = new LineSegment(successor);
+                    if (SegmentIntersection.areIntersect(line, line2)) {
+                        return new LineSegment[]{line, line2};
+                    }
+                }
+
+            } // In case it is the end point of a line segment.
+            else {
+
+                Point predecessor = tree.getPredecessorByKey(point);
+                Point successor = tree.getSuccessorByKey(point);
+
+                // Compare a predecessor and a successor of a current point.
+                if (predecessor != null && successor != null) {
+                    LineSegment line1 = new LineSegment(predecessor);
+                    LineSegment line2 = new LineSegment(successor);
+                    if (SegmentIntersection.areIntersect(line1, line2)) {
+                        return new LineSegment[]{line1, line2};
+                    }
+                }
+
+                // Delete the left point of current line segment.
+                tree.delete(point.neighbour);
             }
         }
 
-        if (!intersection) {
-            System.out.println("NO INTERSECTIONS");
+        return null;
+    }
+
+    // Some methods for fast input reading to pass the last test on Codeforces.
+    // I took it from here https://pastebin.com/2y4kFUzp
+    static BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+    static StringTokenizer stringTokenizer = new StringTokenizer("");
+
+    public static String nextToken() throws IOException {
+        while (!stringTokenizer.hasMoreTokens()) {
+            stringTokenizer = new StringTokenizer(bufferedReader.readLine());
         }
+        return stringTokenizer.nextToken();
+    }
+
+    public static int nextInt() throws IOException {
+        return Integer.parseInt(nextToken());
     }
 
     //***** Tests*****/
@@ -62,24 +184,24 @@ public class SweepLineAlgorithm {
     @Test
     public void testEmptyArray() {
         Integer[] array = {};
-        MergeSorter.sort(array);
-        boolean sorted = isSorted(array);
+        MergeSorter.sort(array, Integer::compareTo);
+        boolean sorted = isSorted(array, Integer::compareTo);
         assertTrue(sorted);
     }
 
     @Test
     public void testArrayAscendingOrder() {
         Double[] array = {1.0, 2.5, 3.3, 4.7, 5.1, 5.1, 6.54, 7.21, 8.23, 9.76, 10.74};
-        MergeSorter.sort(array);
-        boolean sorted = isSorted(array);
+        MergeSorter.sort(array, Double::compareTo);
+        boolean sorted = isSorted(array, Double::compareTo);
         assertTrue(sorted);
     }
 
     @Test
     public void testArrayDecreasingOrder() {
         String[] array = {"yte", "hrd", "bbb", "afd", "abc", "abc", "aaa"};
-        MergeSorter.sort(array);
-        boolean sorted = isSorted(array);
+        MergeSorter.sort(array, String::compareTo);
+        boolean sorted = isSorted(array, String::compareTo);
         assertTrue(sorted);
     }
 
@@ -126,7 +248,40 @@ public class SweepLineAlgorithm {
 
     // Uncomment it to use junit tests. AVLTree checker.
     /*
-    // Test add(K key, V value) method
+    // Test getPredecessorByKey & getSuccessorByKey methods.
+    @Test
+    public void testGetPredecessorMethod1Set1() {
+        AVLTree<Integer, String> tree = set1();
+
+        String correctResult = "i";
+        assertEquals(tree.getPredecessorByKey(5), correctResult);
+    }
+
+    @Test
+    public void testGetPredecessorMethod2Set1() {
+        AVLTree<Integer, String> tree = set1();
+
+        String correctResult = "a";
+        assertEquals(tree.getPredecessorByKey(7), correctResult);
+    }
+
+    @Test
+    public void testGetSuccessorMethod1Set1() {
+        AVLTree<Integer, String> tree = set1();
+
+        String correctResult = "c";
+        assertEquals(tree.getSuccessorByKey(8), correctResult);
+    }
+
+    @Test
+    public void testGetSuccessorMethod2Set1() {
+        AVLTree<Integer, String> tree = set1();
+
+        String correctResult = "a";
+        assertEquals(tree.getSuccessorByKey(5), correctResult);
+    }
+
+    // Test add(K key, V value) method.
     @Test
     public void testAddMethodSet1() {
         AVLTree<Integer, String> tree = set1();
@@ -152,6 +307,24 @@ public class SweepLineAlgorithm {
     }
 
     // Test delete(K key) method.
+    @Test
+    public void testDeleteRootSet1() {
+        AVLTree<Integer, String> tree = set1();
+        tree.delete(9);
+
+        String correctResult = "[[1, d, 1], [2, h, 0], [3, b, 2], [4, i, 0], [5, e, 1], [6, a, 3], [7, j, 0], [8, c, 2], [10, g, 1], [11, k, 0]]";
+        assertEquals(tree.getNodesInorder().toString(), correctResult);
+    }
+
+    @Test
+    public void testDeleteNonExistNodeSet1() {
+        AVLTree<Integer, String> tree = set1();
+        tree.delete(18);
+
+        String correctResult = "[[1, d, 1], [2, h, 0], [3, b, 2], [4, i, 0], [5, e, 1], [6, a, 3], [7, j, 0], [8, f, 1], [9, c, 2], [10, g, 1], [11, k, 0]]";
+        assertEquals(tree.getNodesInorder().toString(), correctResult);
+    }
+
     @Test
     public void testDeleteLeftLeafSet1() {
         AVLTree<Integer, String> tree = set1();
@@ -207,24 +380,6 @@ public class SweepLineAlgorithm {
     }
 
     @Test
-    public void testDeleteRootSet1() {
-        AVLTree<Integer, String> tree = set1();
-        tree.delete(9);
-
-        String correctResult = "[[1, d, 1], [2, h, 0], [3, b, 2], [4, i, 0], [5, e, 1], [6, a, 3], [7, j, 0], [8, c, 2], [10, g, 1], [11, k, 0]]";
-        assertEquals(tree.getNodesInorder().toString(), correctResult);
-    }
-
-    @Test
-    public void testDeleteNonExistNodeSet1() {
-        AVLTree<Integer, String> tree = set1();
-        tree.delete(18);
-
-        String correctResult = "[[1, d, 1], [2, h, 0], [3, b, 2], [4, i, 0], [5, e, 1], [6, a, 3], [7, j, 0], [8, f, 1], [9, c, 2], [10, g, 1], [11, k, 0]]";
-        assertEquals(tree.getNodesInorder().toString(), correctResult);
-    }
-
-    @Test
     public void testDeleteLeftLeftCaseSet3() {
         AVLTree<Integer, String> tree = set3();
         tree.delete(5);
@@ -259,6 +414,19 @@ public class SweepLineAlgorithm {
         String correctResult = "[[3, f, 0], [5, d, 1], [7, e, 2], [8, i, 0], [10, c, 3], [15, j, 0], [25, b, 2], [30, g, 0], [50, a, 1]]";
         assertEquals(tree.getNodesInorder().toString(), correctResult);
     }
+
+    @Test
+    public void testDeleteSeveralNodesSet2() {
+        AVLTree<Integer, String> tree = set2();
+        tree.delete(2);
+        tree.delete(10);
+        tree.delete(6);
+        tree.delete(8);
+        tree.delete(4);
+
+        String correctResult = "[[1, b, 0], [3, d, 1], [5, f, 0], [7, h, 2], [9, j, 1], [11, k, 0]]";
+        assertEquals(tree.getNodesInorder().toString(), correctResult);
+    }
     */
 
     // Some helper methods for junit tests below.
@@ -278,10 +446,10 @@ public class SweepLineAlgorithm {
         for (int i = 0; i < countOfTests; i++) {
             // Generate and sort an array
             Integer[] array = getRandomIntegerArray(maxArrayLength, maxKeyValue);
-            MergeSorter.sort(array);
+            MergeSorter.sort(array, Integer::compareTo);
 
             // If the array is not sorted, then return false.
-            boolean sorted = isSorted(array);
+            boolean sorted = isSorted(array, Integer::compareTo);
             if (!sorted) {
                 return false;
             }
@@ -315,13 +483,14 @@ public class SweepLineAlgorithm {
     /**
      * Check if an array is sorted in ascending order.
      *
-     * @param array - array to test.
-     * @param <T>   - data type which the array contains.
+     * @param array      - array to test.
+     * @param comparator - comparator by which we can compare array's elements. It must be the same type as the array.
+     * @param <T>        - data type which the array contains.
      * @return true if the array is sorted, false - otherwise.
      */
-    private <T extends Comparable<? super T>> boolean isSorted(T[] array) {
+    private <T> boolean isSorted(T[] array, Comparator<T> comparator) {
         for (int i = 0; i < array.length - 1; i++) {
-            if (array[i].compareTo(array[i + 1]) > 0) {
+            if (comparator.compare(array[i], array[i + 1]) > 0) {
                 return false;
             }
         }
@@ -394,7 +563,6 @@ public class SweepLineAlgorithm {
     }
 }
 
-
 /**
  * 2.1 Segment intersection.
  * <p>
@@ -404,28 +572,29 @@ public class SweepLineAlgorithm {
  * Another example is the finding the convex hull of given points.
  * We can use the "Graham scan algorithm", "Gift wrapping algorithm" or the "Chan's algorithm".
  * These algorithms require to know about lines reflection and rotation to find the minimal convex hull.
- * Lines reflection and rotation are algorithms based on line intersection. That's why it is really important basis algorithm.
+ * Lines reflection and rotation are algorithms based on the line intersection. That's why it is really important basis algorithm.
  * What's more, finding the convex hull is the geometry task with practical usage.
  * For instance, we can build the antenna network setting receivers in some territory with the minimal number of this equipment.
  * </p>
  * <p>
  * Sweep Line algorithm summary.
  * As was mentioned in Assignment description the Sweep Line algorithm checks if two any line segments intersect each other.
- * This algorithm does it by O(n*log(n)). Firstly, we can sort a list of points by x coordinate.
- * It will be done by O(n*log(n)). Then, we consider all points from left to right (like passing a vertical line).
+ * This algorithm checks it by O(n*log(n)). Firstly, we can sort a list of points by x coordinate.
+ * If x coordinate of two points is the same, then we compare them by belonging to the segment (is it a left point or a right point).
+ * The sorting will be done by O(n*log(n)). Then, we consider all points from left to right (like passing a vertical line).
  * We add a line segment to the tree sorting by y's coordinate.
  * If two segments intersect, then it means that neighbour segments (according to y's sorting) in an array intersect.
  * In a tree representation, it is the predecessor and successor of the current point.
  * So, if we sort points by x coordinate, but want to find adjacent line segments by y coordinate, then we can use a balanced tree,
  * because each operation for finding the predecessor or the successor costs O(log(n)).
  * Thus, checking n segments requires O(log(n)) for each segment.
- * Therefore, checking all line segments requires n*log(n). Also, it is necessary to sort points firstly.
- * So, the total time is n*log(n) + n*log(n) = O(n*log(n))
+ * Therefore, checking all line segments requires O(n*log(n)). Also, it is necessary to sort points firstly.
+ * So, the total time is n*log(n) + n*log(n) = O(n*log(n)).
  * </p>
  * This class contains a static method to check if two line segments have an intersection.
  * There also some private helper methods.
  * The algorithm was adopted from pseudocode in "Introduction to Algorithms", T.H. Cormen p. 1018.
- * The line intersection method was tested here
+ * The line intersection method was tested here:
  * https://acmp.ru/asp/do/index.asp?main=task&id_course=2&id_section=17&id_topic=25&id_problem=135
  */
 class SegmentIntersection {
@@ -438,7 +607,7 @@ class SegmentIntersection {
      * @param line2 - the second line segment.
      * @return true if these line segments intersect, false - otherwise.
      */
-    static boolean areIntersect(LineSegment line1, LineSegment line2) {
+    public static boolean areIntersect(LineSegment line1, LineSegment line2) {
         Point point1 = line1.start;
         Point point2 = line1.end;
         Point point3 = line2.start;
@@ -479,7 +648,7 @@ class SegmentIntersection {
      * @param point2 - the end of the second vector.
      * @return zero if two vectors are collinear; positive value if the first vector is righter than the second vector; negative value - otherwise.
      */
-    static int getDirection(Point origin, Point point1, Point point2) {
+    private static int getDirection(Point origin, Point point1, Point point2) {
         Point vector1 = new Point(point1.x - origin.x, point1.y - origin.y);
         Point vector2 = new Point(point2.x - origin.x, point2.y - origin.y);
 
@@ -494,7 +663,7 @@ class SegmentIntersection {
      * @param segment - line segment.
      * @return true if this point lies on the line segment, false - otherwise.
      */
-    static boolean isBelongToSegment(Point point, LineSegment segment) {
+    private static boolean isBelongToSegment(Point point, LineSegment segment) {
         int startX = Math.min(segment.start.x, segment.end.x);
         int startY = Math.min(segment.start.y, segment.end.y);
         int endX = Math.max(segment.start.x, segment.end.x);
@@ -506,38 +675,91 @@ class SegmentIntersection {
 
 /**
  * Class to store two points.
- * On of them - the start point of a segment, another - the end.
+ * One of them - the start point of a segment, another - the end.
  */
 class LineSegment {
     Point start;
     Point end;
 
-    public LineSegment(Point start, Point end) {
-        this.start = start;
-        this.end = end;
+    public LineSegment(Point point) {
+        this.start = point;
+        this.end = point.neighbour;
     }
 
     @Override
     public String toString() {
-        return start.toString() + " " + end.toString();
+        if (start.inputOrder == Point.Order.FIRST) {
+            return start.toString() + " " + end.toString();
+        }
+        return end.toString() + " " + start.toString();
     }
 }
 
 /**
  * Class to store x and y coordinates of some point.
+ * This class is comparable. So, we can compare any two Point objects.
+ * Actually, the compareTo() method contains the rule of comparing two points in Sweep Line Algorithm.
  */
-class Point {
+class Point implements Comparable<Point> {
     int x;
     int y;
+    // The point knows about another point which belongs to the same line.
+    Point neighbour;
+    // The order of a point represents if this point has been read as the first or the last point
+    // of the current line segment. It allows us to preserve the input and output order as the same.
+    Order inputOrder;
 
     public Point(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
+    public Point(int x, int y, Order inputOrder) {
+        this(x, y);
+        this.inputOrder = inputOrder;
+    }
+
+    /**
+     * Determines if this point is placed to the left than it's neighbour in a geometrical representation.
+     *
+     * @return true if this point is to the left; false - otherwise; null - if it is a single point (does not belong to any line segment)
+     */
+    public Boolean isLeftPoint() {
+        if (neighbour == null) {
+            return null;
+        }
+
+        if (x == neighbour.x) {
+            return inputOrder == Order.FIRST;
+        }
+
+        return x < neighbour.x;
+    }
+
     @Override
     public String toString() {
         return x + " " + y;
+    }
+
+    /**
+     * Compares two points by the rule of the Sweep Line Algorithm
+     *
+     * @param o - another point.
+     * @return positive value if this point is higher than another, or to the left of another if the ordinates are the same.
+     */
+    @Override
+    public int compareTo(Point o) {
+        if (this.y == o.y) {
+            return this.x - o.x;
+        }
+        return this.y - o.y;
+    }
+
+    /**
+     * Enumeration to define if this point is the start or the end of a line
+     */
+    enum Order {
+        FIRST, SECOND
     }
 }
 
@@ -556,13 +778,12 @@ class Point {
 class MergeSorter {
 
     /**
-     * The main method to call.
-     *
-     * @param array - array to sort.
-     * @param <T>   - it accepts arrays which has the comparable data type.
+     * @param array      - array to sort.
+     * @param comparator - the comparator by which values will be compared. It must be the same data type as the array.
+     * @param <T>        - it accepts arrays with generic data type.
      */
-    public static <T extends Comparable<? super T>> void sort(T[] array) {
-        sortTwoParts(array, 0, array.length - 1);
+    public static <T> void sort(T[] array, Comparator<T> comparator) {
+        sortTwoParts(array, 0, array.length - 1, comparator);
     }
 
     /**
@@ -571,9 +792,10 @@ class MergeSorter {
      * @param array      - array which part is required to sort.
      * @param leftIndex  - the start index of the part (inclusive).
      * @param rightIndex - the end index of the part (inclusive).
-     * @param <T>        it accepts arrays which has the comparable data type.
+     * @param comparator - the comparator by which values will be compared. It must be the same data type as the array.
+     * @param <T>        - it accepts arrays with generic data type.
      */
-    private static <T extends Comparable<? super T>> void sortTwoParts(T[] array, int leftIndex, int rightIndex) {
+    private static <T> void sortTwoParts(T[] array, int leftIndex, int rightIndex, Comparator<T> comparator) {
         // If we have the part with only one element, then there is nothing to sort.
         if (leftIndex >= rightIndex) {
             return;
@@ -585,12 +807,12 @@ class MergeSorter {
         int middleIndex = leftIndex + (rightIndex - leftIndex) / 2;
 
         // Sort the left part.
-        sortTwoParts(array, leftIndex, middleIndex);
+        sortTwoParts(array, leftIndex, middleIndex, comparator);
         // Sort the right part.
-        sortTwoParts(array, middleIndex + 1, rightIndex);
+        sortTwoParts(array, middleIndex + 1, rightIndex, comparator);
 
         // Merge two sorted parts.
-        mergeTwoParts(array, leftIndex, middleIndex, rightIndex);
+        mergeTwoParts(array, leftIndex, middleIndex, rightIndex, comparator);
     }
 
     /**
@@ -600,11 +822,12 @@ class MergeSorter {
      * @param leftIndex   - the start index of the left part (inclusive).
      * @param middleIndex - the end index of the left part (inclusive).
      * @param rightIndex  - the end index of the right part (inclusive).
-     * @param <T>         - it accepts arrays which has the comparable data type.
+     * @param comparator  - the comparator by which values will be compared. It must be the same data type as the array.
+     * @param <T>         - it accepts arrays with generic data type.
      */
-    private static <T extends Comparable<? super T>> void mergeTwoParts(T[] array, int leftIndex, int middleIndex, int rightIndex) {
+    private static <T> void mergeTwoParts(T[] array, int leftIndex, int middleIndex, int rightIndex, Comparator<T> comparator) {
         // This array will contain the merged parts.
-        T[] sortedPart = (T[]) new Comparable[rightIndex - leftIndex + 1];
+        T[] sortedPart = (T[]) new Object[rightIndex - leftIndex + 1];
 
         int k = 0; // iterator for the 'sortedPart' array.
         int i = leftIndex; // iterator for the left part.
@@ -612,7 +835,7 @@ class MergeSorter {
 
         // Merging two parts via comparing elements from left and right parts.
         while (i <= middleIndex && j <= rightIndex) {
-            if (array[i].compareTo(array[j]) <= 0) {
+            if (comparator.compare(array[i], array[j]) <= 0) {
                 sortedPart[k++] = array[i++];
             } else {
                 sortedPart[k++] = array[j++];
@@ -644,7 +867,7 @@ class MergeSorter {
  * Class with AVL tree implementation.
  *
  * @param <K> key by which nodes will be sorted.
- * @param <V> value of a node.
+ * @param <V> value of a node to store.
  */
 class AVLTree<K extends Comparable<K>, V> {
     private Node root;
@@ -664,7 +887,7 @@ class AVLTree<K extends Comparable<K>, V> {
     public void add(K key, V value) {
         // If the tree is empty.
         if (root == null) {
-            root = new AVLTree.Node(key, value, null);
+            root = new Node(key, value, null);
         } // Reassign the reference to the node after insertion and rebalancing.
         else {
             root = add(key, value, root);
@@ -674,27 +897,45 @@ class AVLTree<K extends Comparable<K>, V> {
     /**
      * Deletion of a node by its key.
      * If the node with such key doesn't exist then don't change the tree.
-     * The deletion is the same as aa deletion in BST.
+     * The deletion is the same as a deletion in BST.
      * However, we do the trinode restructuring after deletion.
      * As we search the node to delete in a balanced tree and the rebalancing takes the constant time,
      * then the method delete(K key) takes O(log(n)) time complexity, where n - count of all nodes in a tree.
      *
      * @param key - key which the node to delete has.
-     * @return the value of the node which was deleted. If such node has not been in a tree, then return null.
      */
-    public V delete(K key) {
-        return delete(key, root).value;
+    public void delete(K key) {
+        root = delete(key, root);
     }
 
     /**
-     * Find the node by it's key.
-     * O(log(n)) in a worst case.
+     * Return the value which is followed after the current key in a inorder traversal.
+     * O(log(n)) as the tree is balanced. Therefore, O(h) = O(log(n)).
      *
-     * @param key - key of this node.
-     * @return the node if it's found, null - otherwise.
+     * @param key - key of a node which successor is required to find.
+     * @return the successor's value.
      */
-    private Node getNodeByKey(K key) {
-        return getNodeByKey(key, root);
+    public V getSuccessorByKey(K key) {
+        Node successor = getSuccessor(getNodeByKey(key));
+        if (successor == null) {
+            return null;
+        }
+        return successor.value;
+    }
+
+    /**
+     * Return the node which is followed before the current key in a inorder traversal.
+     * O(log(n)) as the tree is balanced. Therefore, O(h) = O(log(n)).
+     *
+     * @param key - key of a node which predecessor is required to find.
+     * @return the predecessor's value.
+     */
+    public V getPredecessorByKey(K key) {
+        Node predecessor = getPredecessor(getNodeByKey(key));
+        if (predecessor == null) {
+            return null;
+        }
+        return predecessor.value;
     }
 
     /**
@@ -743,6 +984,7 @@ class AVLTree<K extends Comparable<K>, V> {
      * @return the new head-node of this subtree after the rebalancing.
      */
     private Node add(K key, V value, Node subTree) {
+
         // If the key is less than the node's key.
         if (key.compareTo(subTree.key) < 0) {
             // Insert a new node as a new left subtree.
@@ -889,7 +1131,7 @@ class AVLTree<K extends Comparable<K>, V> {
 
     /**
      * Return the node which is minimum comparing with other nodes of this subtree.
-     * O(log(n)) in a worst case.
+     * O(log(n)).
      *
      * @param subTree - subtree in which the minimum node is required to find.
      * @return the left most child of this subtree.
@@ -908,7 +1150,7 @@ class AVLTree<K extends Comparable<K>, V> {
 
     /**
      * Return the node which is maximum comparing with other nodes of this subtree.
-     * O(log(n)) in a worst case.
+     * O(log(n)).
      *
      * @param subTree - subtree in which the maximum node is required to find.
      * @return the right most child of this subtree.
@@ -1021,13 +1263,16 @@ class AVLTree<K extends Comparable<K>, V> {
      * @return the reference to the new root of this subtree.
      */
     private Node rightRotate(Node rootNode) {
+        // Reassign the references.
         Node newRootNode = rootNode.leftNode;
         rootNode.leftNode = newRootNode.rightNode;
         newRootNode.rightNode = rootNode;
 
+        // Swap the parents as the newRootNode now is a parent of rootNode.
         newRootNode.parentNode = rootNode.parentNode;
         rootNode.parentNode = newRootNode;
 
+        // Update heights after rotation.
         updateHeight(rootNode);
         updateHeight(newRootNode);
 
@@ -1061,13 +1306,16 @@ class AVLTree<K extends Comparable<K>, V> {
      * @return the reference to the new root of this subtree.
      */
     private Node leftRotate(Node rootNode) {
+        // Reassign the references.
         Node newRootNode = rootNode.rightNode;
         rootNode.rightNode = newRootNode.leftNode;
         newRootNode.leftNode = rootNode;
 
+        // Swap the parents as the newRootNode now is a parent of rootNode.
         newRootNode.parentNode = rootNode.parentNode;
         rootNode.parentNode = newRootNode;
 
+        // Update heights after rotation.
         updateHeight(rootNode);
         updateHeight(newRootNode);
 
@@ -1084,7 +1332,7 @@ class AVLTree<K extends Comparable<K>, V> {
      * @return the reference to the new root of this subtree.
      */
     private Node restoreBalance(Node subTree) {
-        // Know the balance between subtree's children.
+        // Get the balance between subtree's children.
         updateHeight(subTree);
         int balance = getBalanceBetweenNodes(subTree);
 
@@ -1113,6 +1361,17 @@ class AVLTree<K extends Comparable<K>, V> {
      * Find the node by it's key.
      * O(log(n)) in a worst case.
      *
+     * @param key - key of this node.
+     * @return the node if it's found, null - otherwise.
+     */
+    private Node getNodeByKey(K key) {
+        return getNodeByKey(key, root);
+    }
+
+    /**
+     * Find the node by it's key.
+     * O(log(n)) in a worst case.
+     *
      * @param key     - key of this node.
      * @param subTree - subtree in which the node is required to find.
      * @return the node if it's found, null - otherwise.
@@ -1127,15 +1386,13 @@ class AVLTree<K extends Comparable<K>, V> {
         if (key.compareTo(subTree.key) < 0) {
             if (subTree.leftNode == null) {
                 return null;
-            } else {
-                return getNodeByKey(key, subTree.leftNode);
             }
+            return getNodeByKey(key, subTree.leftNode);
         } else {
             if (subTree.rightNode == null) {
                 return null;
-            } else {
-                return getNodeByKey(key, subTree.rightNode);
             }
+            return getNodeByKey(key, subTree.rightNode);
         }
     }
 
@@ -1167,6 +1424,6 @@ class AVLTree<K extends Comparable<K>, V> {
      * Enumeration of cases how to get around all the nodes
      */
     private enum TraversalOrder {
-        PREORDER, INORDER, POSTORDER;
+        PREORDER, INORDER, POSTORDER
     }
 }

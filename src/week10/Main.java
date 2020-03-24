@@ -90,10 +90,13 @@ class Graph<V, E extends Number> {
      */
     public LinkedList<V> getReachable(V start, Double maxDistance) {
         LinkedList<V> reachable = new LinkedList<>();
-        reachable.add(start);
-        if (maxDistance.compareTo(0.0) <= 0) {
+        if (maxDistance.compareTo(0.0) < 0) {
+            return reachable;
+        } else if (maxDistance.compareTo(0.0) == 0) {
+            reachable.add(start);
             return reachable;
         } else {
+            reachable.add(start);
             for (Edge edge : incidentEdges(start)) {
                 V next = edge.to;
                 if (next.equals(start)) {

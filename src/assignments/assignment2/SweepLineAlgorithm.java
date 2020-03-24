@@ -16,8 +16,8 @@ import static org.junit.Assert.*;
 
 /**
  * @author Roman Soldatov BS19-02.
- * Submission number: 74147304
- * https://codeforces.com/group/3ZU2JJw8vQ/contest/272963/submission/74147304
+ * Submission number: 74222898
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/272963/submission/74222898
  * <p>
  * 2.4 Sweep line algorithm.
  * This class contains the main method to launch it on Codeforces and the sweepLineAlgorithm.
@@ -649,8 +649,8 @@ class SegmentIntersection {
      * @return zero if two vectors are collinear; positive value if the first vector is righter than the second vector; negative value - otherwise.
      */
     private static int getDirection(Point origin, Point point1, Point point2) {
-        Point vector1 = new Point(point1.x - origin.x, point1.y - origin.y);
-        Point vector2 = new Point(point2.x - origin.x, point2.y - origin.y);
+        Point vector1 = new Point(point1.x - origin.x, point1.y - origin.y, Point.Order.SECOND);
+        Point vector2 = new Point(point2.x - origin.x, point2.y - origin.y, Point.Order.SECOND);
 
         return vector1.y * vector2.x - vector1.x * vector2.y;
     }
@@ -709,13 +709,9 @@ class Point implements Comparable<Point> {
     // of the current line segment. It allows us to preserve the input and output order as the same.
     Order inputOrder;
 
-    public Point(int x, int y) {
+    public Point(int x, int y, Order inputOrder) {
         this.x = x;
         this.y = y;
-    }
-
-    public Point(int x, int y, Order inputOrder) {
-        this(x, y);
         this.inputOrder = inputOrder;
     }
 

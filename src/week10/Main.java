@@ -6,6 +6,7 @@ public class Main {
     public static void main(String[] args) {
 
         Graph<String, Double> sampleGraph = new Graph<>();
+
         sampleGraph.insertVertex("Innopolis");
         sampleGraph.insertVertex("Kazan");
         sampleGraph.insertVertex("Kyzyl");

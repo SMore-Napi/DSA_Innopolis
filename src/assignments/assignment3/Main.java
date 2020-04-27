@@ -13,16 +13,16 @@ import static org.junit.Assert.*;
  * @author Roman Soldatov BS19-02
  * <p>
  * 2.1 Connected graph.
- * Submission number: 78216138
- * https://codeforces.com/group/3ZU2JJw8vQ/contest/276900/submission/78216138
+ * Submission number: 78293897
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/276900/submission/78293897
  * <p>
  * 2.2 Components dictionary.
- * Submission number: 78216837
- * https://codeforces.com/group/3ZU2JJw8vQ/contest/276900/submission/78216837
+ * Submission number: 78293977
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/276900/submission/78293977
  * <p>
  * 2.3 Minimum spanning forest.
- * Submission number: 78217012
- * https://codeforces.com/group/3ZU2JJw8vQ/contest/276900/submission/78217012
+ * Submission number: 78294098
+ * https://codeforces.com/group/3ZU2JJw8vQ/contest/276900/submission/78294098
  * <p>
  * This is the main class with main method which launch Codeforces tasks.
  * Also, this class contains junit methods for testing the Graph class.
@@ -272,6 +272,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Default constructor.
+     * O(1).
      */
     public Graph() {
         this.adjacencyList = new HashMap<>();
@@ -281,6 +282,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Constructor which copies vertices from another graph.
+     * O(|V|).
      *
      * @param vertices - vertices to insert.
      */
@@ -293,6 +295,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Vertex insertion.
+     * O(1).
      *
      * @param vertex - vertex value to insert.
      */
@@ -303,7 +306,8 @@ class Graph<V, E extends Comparable<E>> {
     }
 
     /**
-     * Edge insertion
+     * Edge insertion.
+     * O(1).
      *
      * @param from   - first vertex.
      * @param to     - second vertex.
@@ -334,6 +338,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Get the number of vertices in a graph.
+     * O(1).
      *
      * @return the number of vertices.
      */
@@ -343,6 +348,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Get the list of edges from the graph.
+     * O(1).
      *
      * @return all edges.
      */
@@ -352,6 +358,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Return the list of all vertices which are adjacent to the vertex.
+     * O(1).
      *
      * @param vertex - vertex which adjacent vertices is required to get.
      * @return the HashMap of adjacent vertices. (adjVertex <-> edge's weight).
@@ -362,6 +369,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Return a random vertex from the graph.
+     * O(1).
      *
      * @return vertex value from the graph.
      */
@@ -374,6 +382,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * The Depth-First Search algorithm.
+     * O(|E|+|V|).
      *
      * @param start - start the DFS from this vertex.
      * @return - the list of vertices which are connected with 'start' vertex in DFS order.
@@ -387,6 +396,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Recursive DFS method for visiting vertices.
+     * O(|E|+|V|).
      *
      * @param vertex          - start vertex.
      * @param visitedVertices - list of visited vertices.
@@ -513,7 +523,7 @@ class Graph<V, E extends Comparable<E>> {
      * MSF initialization: O(|V|).
      * DisjointIntSet initialization: O(|V|).
      * Sort edges: O(|E| log|E|).
-     * Fill the minimum spanning forest: O(|E|).
+     * Fill the minimum spanning forest: O(|E| log|V|).
      * Rewrite MSF into the map and the list of graphs: O(|E|).
      * Insert non adjacent vertices: O(V).
      * Time complexity: O(|E| log|E|)
@@ -584,6 +594,7 @@ class Graph<V, E extends Comparable<E>> {
 
     /**
      * Initialization and setting default values for dictionary, componentNumber and vertexStatus variables.
+     * O(|V|).
      */
     private void initializeVariables() {
         dictionary = new HashMap<>(adjacencyList.size());
@@ -629,6 +640,7 @@ class Graph<V, E extends Comparable<E>> {
 
         /**
          * Constructor.
+         * O(1).
          *
          * @param from   - first vertex.
          * @param to     - second vertex.
@@ -643,6 +655,7 @@ class Graph<V, E extends Comparable<E>> {
         /**
          * Getter for the weight.
          * Should be used for the Comparator.
+         * O(1).
          *
          * @return weight of the edge.
          */
@@ -665,6 +678,7 @@ class Graph<V, E extends Comparable<E>> {
 
         /**
          * Default Constructor.
+         * O(1).
          */
         public Pairs() {
             pairV = new HashMap<>();
@@ -673,6 +687,7 @@ class Graph<V, E extends Comparable<E>> {
 
         /**
          * Insertion the pair.
+         * O(1).
          *
          * @param vertex - vertex to store.
          * @param id     - assign the id (key) for this vertex.
@@ -684,6 +699,7 @@ class Graph<V, E extends Comparable<E>> {
 
         /**
          * Return the integer id to which the vertex refers to.
+         * O(1).
          *
          * @param vertex - vertex which id is required to get.
          * @return the id of the vertex.
@@ -694,6 +710,7 @@ class Graph<V, E extends Comparable<E>> {
 
         /**
          * Return the value of the vertex by id.
+         * O(1).
          *
          * @param id - id of this vertex.
          * @return value of the vertex.
@@ -718,6 +735,7 @@ class DisjointIntSets {
      * The single constructor of disjoint sets.
      * Initially each element has a parent = element,
      * i.e. parent[element] = element
+     * O(|V|).
      *
      * @param size - the number of elements.
      */
@@ -732,6 +750,7 @@ class DisjointIntSets {
     /**
      * Do the union of two elements.
      * The 'i' element will have a new parent of 'j' element.
+     * Amortized O(log|V|).
      *
      * @param i - first element.
      * @param j - second element.
@@ -742,6 +761,7 @@ class DisjointIntSets {
 
     /**
      * Find the parent of an element 'i'.
+     * Amortized O(log|V|).
      *
      * @param i - element which parent is required to find.
      * @return the parent of the element 'i'.
@@ -765,6 +785,7 @@ class DisjointIntSets {
      * then after this method all elements refers to D.
      * i.e. A -> D, B -> D, C -> D, D -> D.
      * So, all elements from union have the same parent (representative).
+     * Amortized O(log|V|).
      */
     public void recalculateRepresentatives() {
         for (int i = 0; i < parents.length; i++) {
